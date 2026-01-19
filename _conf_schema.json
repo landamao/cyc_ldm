@@ -85,5 +85,11 @@
             "step": 0.01
         },
         "default": 0.5
+    },
+    "彩蛋功能": {
+        "description": "彩蛋功能开关",
+        "hint": "",
+        "type": "bool",
+        "default": true
     }
 }
