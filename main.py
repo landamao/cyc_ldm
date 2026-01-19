@@ -10,56 +10,69 @@ from astrbot.api.event import filter, AstrMessageEvent
 
 @register("多功能戳一戳", "懒大猫", "多种戳一戳功能", "9.9.9", "")
 class 戳一戳懒大猫(Star):
+    #初始化只会执行一次，写再冗余都不会浪费性能
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
 
-        #量多不弄配置文件，想修改直接编辑代码
-        self.l被戳回复语 = ("戳我干嘛呀", "怎么啦", "喵～", "不要戳我啊", "有什么事吗？", "别戳啦~")
+        # 读取配置
+        try:
+            from .自定义配置 import 配置
+            self.l被戳回复语 = 配置.戳完回复语; self.d普通 = 配置.普通; self.l不回复关键词 = 配置.不回复关键词
+            self.d限定 = 配置.限定; self.d彩蛋 = 配置.彩蛋; self.d关键词次数 = 配置.关键词次数
+            self.l冷却话语 = 配置.冷却话语; self.l不要戳自己语句 = 配置.不要戳自己语句; self.l戳前自嗨语 = 配置.戳前自嗨语
+            self.l管理员语句 = 配置.管理员语句; self.l戳完回复语 = 配置.戳完回复语; self.l遵命语 = 配置.遵命语
+            logger.info("载入自定义配置成功")
+        except Exception as e:  #失败直接退回预设配置
+            logger.error(f"载入配置失败，请确保配置文件存在且格式正确\n{e}", exc_info=True)
+            logger.warning("\n\n注意：已使用预设配置")
 
-        #关键词，随机次数范围
-        self.d普通 = {"攻击": (2, 3), "猛攻": (3, 4), "戳": (1, 3), "猛揍": (5, 6), "狂揍": (5, 6), "揍他": (5, 6)}
+            #用元组或列表都可以，我是完美主义者，为了稍微提升运行时性能，虽然不多
+            self.l被戳回复语 = ("戳我干嘛呀", "怎么啦", "喵～", "不要戳我啊", "有什么事吗？", "别戳啦~")
+            # 关键词，随机次数范围
+            self.d普通 = {"攻击": (2, 3), "猛攻": (3, 4), "戳": (1, 3), "猛揍": (5, 6), "狂揍": (5, 6), "揍他": (5, 6)}
 
-        self.l不回复关键词 = ("猛揍", "狂揍", "揍他")
+            self.l不回复关键词 = ("猛揍", "狂揍", "揍他")
 
-        self.d限定 = {"肘击": (7, 8), "撞死他": (9, 18), "创死他": (9, 18), "撞大运": (16, 24), "揍死他": (24, 36), "限流": (36, 48),
-                    "一键限流": (36, 48)}
-                    
-        self.d彩蛋 = {"亲亲": (52, 52), "抱抱": (38, 38)}
-        
-        self.d关键词次数 = self.d普通 | self.d限定 | self.d彩蛋
-        
-        self.l冷却话语 = ( "我戳手疼了，晚点再玩嘛。", "够啦够啦，歇会再玩", "不戳啦，歇一会吧" )
+            self.d限定 = {"肘击": (7, 8), "撞死他": (9, 18), "创死他": (9, 18), "撞大运": (16, 24), "揍死他": (24, 36),
+                          "限流": (36, 48), "一键限流": (36, 48)}
 
-        self.l不要戳自己语句 = ( "だめですよ！", "让你戳了吗", "别让我自己戳自己啦，很奇怪的。", "我才不要自己戳自己呢。" )
+            self.d彩蛋 = {"亲亲": (52, 52), "抱抱": (38, 38)}
 
-        self.l戳前自嗨语 = ( "收到收到，马上发动攻击！", "好嘞，准备出击！", "没问题，我这就去戳戳Ta！", "收到收到！" )
+            self.d关键词次数 = self.d普通 | self.d限定 | self.d彩蛋
 
-        self.l管理员语句 = ("对方已被击灭", "成功击灭对方", "对方被你打倒啦", "对方认输了")
+            self.l冷却话语 = ("我戳手疼了，晚点再玩嘛。", "够啦够啦，歇会再玩", "不戳啦，歇一会吧")
 
-        self.l戳完回复语 = ("我厉害叭～", "搞定咯")
+            self.l不要戳自己语句 = ("だめですよ！", "让你戳了吗", "别让我自己戳自己啦，很奇怪的。",
+                                    "我才不要自己戳自己呢。")
 
-        self.l遵命语 = ("收到！管理员大大～这就安排！✨", "收到管理员的指令，保证完成任务", "遵命，管理员大大")
+            self.l戳前自嗨语 = ("收到收到，马上发动攻击！", "好嘞，准备出击！", "没问题，我这就去戳戳Ta！", "收到收到！")
 
+            self.l管理员语句 = ("对方已被击灭", "成功击灭对方", "对方被你打倒啦", "对方认输了")
+
+            self.l戳完回复语 = ("我厉害叭～", "搞定咯")
+
+            self.l遵命语 = ("收到！管理员大大～这就安排！✨", "收到管理员的指令，保证完成任务",
+                            "遵命，管理员大大") + self.l戳前自嗨语
 
         #读取配置
-        self.conf = config; self.br开启百度百科 = self.conf['百度百科']; self.br戳一戳 = self.conf['戳一戳']
-        self.br管理器无冷却 = self.conf['管理员无冷却']; self.br开启跟戳 = self.conf['跟戳']; self.br开启反戳 = self.conf['被戳']
-        self.l关键词戳一戳 = tuple([ i.strip() for i in self.conf['关键词戳一戳'].replace("，", ",").split(",") ])
+        self.br开启百度百科 = config['百度百科']; self.br戳一戳 = config['戳一戳']
+        self.br管理器无冷却 = config['管理员无冷却']; self.br开启跟戳 = config['跟戳']; self.br开启反戳 = config['被戳']
+        self.l关键词戳一戳 = tuple([ i.strip() for i in config['关键词戳一戳'].replace("，", ",").split(",") ])
         #这几项为字符串填写，需捕获错误
-        try: self.戳一戳冷却时间 = tuple(map(int, self.conf['戳一戳冷却时间'].strip().replace("，", ",").split(",")))
+        try: self.戳一戳冷却时间 = tuple(map(int, config['戳一戳冷却时间'].strip().replace("，", ",").split(",")))
         except: logger.error("戳一戳冷却时间填写有误，使用默认值20, 60"); self.戳一戳冷却时间 = (20, 60)
-        self.br指令菜单 = self.conf['指令菜单'].replace('开', '1').replace('关', '0')
+        self.br指令菜单 = config['指令菜单'].replace('开', '1').replace('关', '0')
         try: #转成整数便于判断也便于判断填写格式是否正确
-            if self.conf['指令菜单'][0] == "0": self.br指令菜单 = (0,0)
+            if config['指令菜单'][0] == "0": self.br指令菜单 = (0,0)
             self.br指令菜单 = tuple(map(int,self.br指令菜单.strip().replace("，",",").split(",")))
         except: logger.error("指令菜单开关格式填写有误，使用默认值开, 关"); self.br指令菜单 = (1,0)
 
-        try: self.tu权重值列表 = tuple(map(int, self.conf['被戳反应权重'].strip().replace("，", ",").split(",")))
+        try: self.tu权重值列表 = tuple(map(int, config['被戳反应权重'].strip().replace("，", ",").split(",")))
         except: logger.error("被戳反应权重填写有误，使用默认值5, 5, 2"); self.tu权重值列表 = (5, 5, 2)
-
+        self.br开启彩蛋功能 = config['彩蛋功能']
         self.l权重事件列表 = ('回戳', '随机回复', '不响应')
-        self.权重和 = sum(self.tu权重值列表); self.v跟戳概率 = self.conf['跟戳概率'] * 100
-        self.v反应戳一戳冷却时间 = self.conf['反应戳一戳冷却时间']; self.v反戳次数 = self.conf['反戳次数']
+        self.权重和 = sum(self.tu权重值列表); self.v跟戳概率 = config['跟戳概率'] * 100
+        self.v反应戳一戳冷却时间 = config['反应戳一戳冷却时间']; self.v反戳次数 = config['反戳次数']
 
         self.l管理员ID = tuple([ i for i in self.context.get_config()['admins_id'] ])
 
@@ -81,7 +94,7 @@ class 戳一戳懒大猫(Star):
         )
         self.d用户攻击冷却时间 = {};  self.d反应戳一戳冷却时间 = {}
 
-        [ logger.info(f'{i}：{j}') for i, j in self.conf.items() ]; logger.info('加载完成')
+        [ logger.info(f'{i}：{j}') for i, j in config.items() ]; logger.info('加载完成')
 
     @event_message_type(EventMessageType.GROUP_MESSAGE, priority=96)
     async def f主函数处理消息(self, event: AstrMessageEvent):  # 主函数
@@ -248,17 +261,19 @@ class 戳一戳懒大猫(Star):
             if v消息文本内容.startswith(关键词):
                 event.stop_event(); break
         else:
-            for 关键词 in self.d彩蛋:
+            for 关键词 in self.d限定:
                 if v消息文本内容.startswith(关键词):
-                    br彩蛋 = True; break
-            else:
-                for 关键词 in self.d限定:
-                    if v消息文本内容.startswith(关键词):
-                        if not br发送者是管理员:
-                            event.should_call_llm(False); return
-                        event.stop_event(); break
-                else: return
+                    if not br发送者是管理员:
+                        event.should_call_llm(False); return
+                    event.stop_event(); break
 
+            else:
+                if self.br开启彩蛋功能:
+                    for 关键词 in self.d彩蛋:
+                        if v消息文本内容.startswith(关键词):
+                            br彩蛋 = True; break
+                    else: return
+                else: return
 
         v机器人ID = event.get_self_id()
         v群ID = v消息对象.group_id
@@ -271,6 +286,7 @@ class 戳一戳懒大猫(Star):
         # 检查是否超过次数
         if self.v今日戳一戳总次数 > 200:
             if br彩蛋:
+                if v被艾特用户ID == v机器人ID: yield event.plain_result(f"我可不是谁都能{关键词[0]}的"); return
                 yield event.plain_result(f"「{v发送者昵称}」{关键词[0]}了{关键词[1]}「{v被艾特用户昵称}」")
                 if 表情文件 := self._f发送表情(关键词): yield event.make_result().file_image(表情文件)
             else: yield event.plain_result("我今日已经戳累啦，明天再玩叭")
@@ -282,7 +298,7 @@ class 戳一戳懒大猫(Star):
             logger.warning(f"用户{v发送者昵称}冷却时间：{结束时间 - 当前时间}秒")
             yield event.plain_result(random.choice(self.l冷却话语)); event.should_call_llm(False); return
 
-        if br被艾特者是管理员:  # 检查受击人是否是管理员
+        if br被艾特者是管理员 and not br彩蛋:  # 检查受击人是否是管理员
             if random.choice([True, True, False]):
                 if random.choice([True, False]):  
                     yield event.plain_result(f"让你戳了吗"); event.should_call_llm(False); return
@@ -294,6 +310,7 @@ class 戳一戳懒大猫(Star):
         攻击次数 = random.randint(*(self.d关键词次数|self.d限定)[关键词])
 
         if br彩蛋:
+            if v被艾特用户ID == v机器人ID: yield event.plain_result(f"我可不是谁都能{关键词[0]}的"); return
             v自嗨内容 = f"「{v发送者昵称}」{关键词}「{v被艾特用户昵称}」{攻击次数}下"
         # 戳前自嗨
         yield event.plain_result(v自嗨内容 if v自嗨内容 else random.choice(self.l戳前自嗨语))
