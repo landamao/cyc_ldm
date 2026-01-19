@@ -1,0 +1,89 @@
+{
+    "指令菜单": {
+        "description": "指令菜单开关",
+        "hint": "第一个表示指令菜单总开关，第二个表示仅管理员可用开关，兼容中文逗号",
+        "type": "string",
+        "default": "开,关"
+    },
+    "百度百科": {
+        "description": "百度百科开关",
+        "hint": "",
+        "type": "bool",
+        "default": true
+    },
+    "戳一戳": {
+        "description": "戳一戳攻击开关",
+        "hint": "",
+        "type": "bool",
+        "default": true
+    },
+    "管理员无冷却": {
+        "description": "戳一戳管理员无冷却开关",
+        "hint": "",
+        "type": "bool",
+        "default": true
+    },
+    "戳一戳冷却时间": {
+        "description": "攻击戳一戳冷却时间",
+        "hint": "随机冷却时间区间，每个用户单独计算，用逗号分隔，如20,60，兼容中文逗号",
+        "type": "string",
+        "default": "20, 60"
+    },
+    "跟戳": {
+        "description": "跟戳开关",
+        "hint": "",
+        "type": "bool",
+        "default": true
+    },
+    "被戳": {
+        "description": "被戳反戳、被戳回复开关",
+        "hint": "",
+        "type": "bool",
+        "default": true
+    },
+    "关键词戳一戳": {
+        "description": "关键词触发戳一戳",
+        "hint": "消息中包含列表中的关键词时，触发戳一戳，请用逗号隔开各个关键词，兼容中文逗号",
+        "type": "string",
+        "default": "笨蛋，人机，机器人，bot"
+    },
+    "反戳次数": {
+        "description": "反戳/跟戳/关键词触发戳随机次数的最大次数",
+        "hint": "",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 6,
+            "step": 1
+        },
+        "default": 3
+    },
+    "被戳反应权重": {
+        "description": "被戳反应的权重",
+        "hint": "权重顺序：回戳，随机回复一条语句，不响应；用逗号分隔，兼容中文逗号",
+        "type": "string",
+        "default": "5, 5, 2"
+    },
+    "反应戳一戳冷却时间": {
+        "description": "被戳响应和跟戳的冷却时间",
+        "hint": "每个用户单独计算",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 200,
+            "step": 1
+        },
+        "default": 60
+    },
+    "跟戳概率": {
+        "description": "跟戳概率",
+        "hint": "别人戳一戳时，机器人跟着戳一戳的概率",
+        "type": "float",
+        "slider": {
+            "min": 0,
+            "max": 1,
+            "step": 0.01
+        },
+        "default": 0.5
+    }
+}
