@@ -113,7 +113,7 @@ class 戳一戳懒大猫(Star):
             return
 
         # 戳一戳部分
-        #if not self.br戳一戳: return
+        if not self.br戳一戳: return
 
         async for i in self.f戳一戳(event, v消息文本内容, v消息对象, 当前时间): yield i
         return
