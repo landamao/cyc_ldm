@@ -69,11 +69,11 @@ class 戳一戳懒大猫(Star):
 
         try: self.tu权重值列表 = tuple(map(int, config['被戳反应权重'].strip().replace("，", ",").split(",")))
         except: logger.error("被戳反应权重填写有误，使用默认值5, 5, 2"); self.tu权重值列表 = (5, 5, 2)
-        self.br开启彩蛋功能 = config['彩蛋功能']
+        self.br开启彩蛋功能 = config['彩蛋功能']; self.v彩蛋冷却时间 = config['彩蛋冷却时间']
         self.l权重事件列表 = ('回戳', '随机回复', '不响应')
         self.权重和 = sum(self.tu权重值列表); self.v跟戳概率 = config['跟戳概率'] * 100
         self.v反应戳一戳冷却时间 = config['反应戳一戳冷却时间']; self.v反戳次数 = config['反戳次数']
-
+        self.l黑名单用户 = tuple(config['黑名单用户'])
         self.l管理员ID = tuple([ i for i in self.context.get_config()['admins_id'] ])
 
         if self.br指令菜单[0]: self.v所有指令 = self._f格式化指令()
@@ -92,14 +92,26 @@ class 戳一戳懒大猫(Star):
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Edge/121.0.0.0",
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
-        self.d用户攻击冷却时间 = {};  self.d反应戳一戳冷却时间 = {}
+        self.d用户攻击冷却时间 = {};  self.d反应戳一戳冷却时间 = {}; self.d彩蛋冷却时间 = {}
 
         [ logger.info(f'{i}：{j}') for i, j in config.items() ]; logger.info('加载完成')
 
     @event_message_type(EventMessageType.GROUP_MESSAGE, priority=96)
     async def f主函数处理消息(self, event: AstrMessageEvent):  # 主函数
 
-        v消息对象 = event.message_obj; v消息文本内容 = v消息对象.message_str; 当前时间 = time.time()
+        v消息文本内容 = event.message_str
+
+        if self.br开启百度百科 and v消息文本内容.startswith("百度百科") and len(v消息文本内容) > 4:
+            event.stop_event(); v搜索词条 = v消息文本内容[4:].strip()
+            if len(v搜索词条) > 30:
+                yield event.plain_result("词条过长"); return
+            if v搜索词条:
+                百科结果 = await self.f调用百度百科API(v搜索词条); yield event.plain_result(百科结果)
+            return
+
+        if event.get_sender_id() in self.l黑名单用户: return  #在黑名单以下全部不响应
+
+        v消息对象 = event.message_obj; 当前时间 = time.time()
 
         if event.message_obj.message and isinstance(event.message_obj.message[0], Poke):
             if not self.br开启跟戳 and not self.br开启反戳:
@@ -110,15 +122,6 @@ class 戳一戳懒大猫(Star):
             async for i in self.f反应戳一戳(event, 当前时间): yield i
 
         if not v消息文本内容: return
-
-        # 百度百科部分，不终止llm传播
-        if self.br开启百度百科 and v消息文本内容.startswith("百度百科") and len(v消息文本内容) > 4:
-            event.stop_event(); v搜索词条 = v消息文本内容[4:].strip()
-            if len(v搜索词条) > 30:
-                yield event.plain_result("词条过长"); return
-            if v搜索词条:
-                百科结果 = await self.f调用百度百科API(v搜索词条); yield event.plain_result(百科结果)
-            return
 
         if any( i in v消息文本内容 for i in self.l关键词戳一戳 ):
             v发送者ID = v消息对象.sender.user_id; v群ID = v消息对象.group_id
@@ -294,6 +297,9 @@ class 戳一戳懒大猫(Star):
 
         # 检查是否在冷却期
         if self.br管理器无冷却 and br发送者是管理员:  v自嗨内容 = random.choice(self.l遵命语)
+        elif 当前时间 < (结束时间 := self.d彩蛋冷却时间.get(v发送者ID, 0)):
+            logger.warning(f"用户{v发送者昵称}冷却时间：{结束时间 - 当前时间}秒")
+            yield event.plain_result(random.choice(self.l冷却话语)); event.should_call_llm(False); return
         elif 当前时间 < (结束时间 := self.d用户攻击冷却时间.get(v发送者ID, 0)):
             logger.warning(f"用户{v发送者昵称}冷却时间：{结束时间 - 当前时间}秒")
             yield event.plain_result(random.choice(self.l冷却话语)); event.should_call_llm(False); return
@@ -329,10 +335,13 @@ class 戳一戳懒大猫(Star):
 
         # 设置冷却时间
         # 彩蛋设置超长时间，防止戳一戳次数太快耗完
-        v冷却时间 = 5400 if br彩蛋 else random.randint(*self.戳一戳冷却时间)
-        self.d用户攻击冷却时间[v发送者ID] = 当前时间 + v冷却时间; logger.info(f"等待时间{v冷却时间}秒")
+        if br彩蛋:
+            self.d彩蛋冷却时间[v发送者ID] = 当前时间 + self.v彩蛋冷却时间  
+        else:
+            self.d用户攻击冷却时间[v发送者ID] = 当前时间 + random.randint(*self.戳一戳冷却时间)
         # 数据太多时删除过期数据
         if len(self.d用户攻击冷却时间) > 100: self._f清理冷却字典(self.d用户攻击冷却时间, 当前时间)
+        if len(self.d彩蛋冷却时间) > 100: self._f清理冷却字典(self.d彩蛋冷却时间, 当前时间)
 
         return
 
