@@ -91,5 +91,22 @@
         "hint": "",
         "type": "bool",
         "default": true
+    },
+    "彩蛋冷却时间": {
+        "description": "彩蛋冷却时间",
+        "hint": "建议调高一点，防止戳一戳次数太快耗完，每个用户单独计算",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 10000,
+            "step": 1
+        },
+        "default": 5400
+    },
+    "黑名单用户": {
+        "description": "黑名单用户",
+        "hint": "在黑名单的用户将不会响应全部戳一戳，防止有人用小号刷",
+        "type": "list",
+        "default": []
     }
 }
