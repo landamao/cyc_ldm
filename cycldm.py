@@ -20,7 +20,7 @@ async def f反应戳一戳(self, event, v当前时间):
     v机器人ID = v原始消息.get("self_id", 0)
     v群ID = v原始消息.get("group_id", 0)
 
-    v事件 = 获取懒大猫.f权重选择器(self.l权重事件列表, self.tu权重值列表, self.权重和)    ; v事件 = "llm回复"
+    v事件 = 获取懒大猫.f权重选择器(self.l权重事件列表, self.tu权重值列表, self.权重和)
 
     if self.br开启反戳 and v被戳者ID == v机器人ID:
         if v事件 == "回戳": self.v今日戳一戳总次数 += await f发送戳一戳(event, random.randint(1, self.v反戳次数), v群ID, v被戳者ID=v发戳者ID); return
